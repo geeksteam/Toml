@@ -371,7 +371,7 @@ func (enc *Encoder) eStruct(key Key, rv reflect.Value) {
 				if indentLevel != 0 {
 					indentStr += strings.Repeat(enc.Indent, indentLevel)
 				}
-				enc.wf(indentStr+"\n# %s\n", comment)
+				enc.wf("\n"+indentStr+"# %s\n", comment)
 			}
 
 			keyName := sft.Tag.Get("toml")
