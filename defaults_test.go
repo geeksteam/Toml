@@ -6,11 +6,15 @@ import (
 	"testing"
 )
 
+type Person struct {
+	Name    string `comment:"Name comment" default:"Dmitry"`
+	Surname string `comment:"Surname comment" default:"Yakutkin"`
+}
+
 func TestDefaults(t *testing.T) {
 	data := struct {
-		Name    []string `comment:"Name comment" default:"['one', 'two']"`
-		Surname string   `comment:"Surname comment"`
-	}{[]string{"one", "tthree"}, "Yakutkin"}
+		Person Person
+	}{Person: Person{"Dmitry", "Yakutkin"}}
 
 	var Buffer bytes.Buffer
 	e := NewEncoder(&Buffer)

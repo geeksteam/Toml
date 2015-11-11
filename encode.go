@@ -242,11 +242,32 @@ func (enc *Encoder) eArrayOfTables(key Key, rv reflect.Value) {
 
 func (enc *Encoder) eTable(key Key, rv reflect.Value) {
 	panicIfInvalidKey(key)
+	// All values of struct have default values - skip the struct.
+	if isFullyDefaultStruct(key, rv) {
+		return
+	}
 	if len(key) > 0 {
 		enc.wf("%s[%s]", enc.indentStr(key), key.maybeQuotedAll())
 		enc.newline()
 	}
 	enc.eMapOrStruct(key, rv)
+}
+
+// isFullyDefaultStruct says if all actual values of given struct are equal to those
+// which are assigned in their 'default' tag.
+func isFullyDefaultStruct(key Key, rv reflect.Value) bool {
+	if rv.Kind() != reflect.Struct {
+		return false
+	}
+	rt := rv.Type()
+	for i := 0; i < rt.NumField(); i++ {
+		f := rt.Field(i)
+		value := rv.FieldByName(f.Name)
+		if !isOmmitedField(value, f) {
+			return false
+		}
+	}
+	return true
 }
 
 func (enc *Encoder) eMapOrStruct(key Key, rv reflect.Value) {
@@ -339,24 +360,8 @@ func (enc *Encoder) eStruct(key Key, rv reflect.Value) {
 				enc.newline()
 			}
 
-			defaultTag := sft.Tag.Get("default")
-			if defaultTag != "" {
-				// Field is an elementary type.
-				if fmt.Sprintf("%v", sf.Interface()) == defaultTag {
-					continue
-				}
-				// Field is a slice of strings.
-				if sl, ok := sf.Interface().([]string); ok {
-					if fmt.Sprintf("%v", structutils.ParseSliceString(defaultTag)) == fmt.Sprintf("%v", sl) {
-						continue
-					}
-				}
-				// Field is a slice of ints.
-				if sl, ok := sf.Interface().([]int); ok {
-					if fmt.Sprintf("%v", structutils.ParseSliceInt(defaultTag)) == fmt.Sprintf("%v", sl) {
-						continue
-					}
-				}
+			if isOmmitedField(sf, sft) {
+				continue
 			}
 
 			comment := sft.Tag.Get("comment")
@@ -393,6 +398,29 @@ func (enc *Encoder) eStruct(key Key, rv reflect.Value) {
 	}
 	writeFields(fieldsDirect)
 	writeFields(fieldsSub)
+}
+
+func isOmmitedField(sf reflect.Value, sft reflect.StructField) bool {
+	defaultTag := sft.Tag.Get("default")
+	if defaultTag != "" {
+		// Field is an elementary type.
+		if fmt.Sprintf("%v", sf.Interface()) == defaultTag {
+			return true
+		}
+		// Field is a slice of strings.
+		if sl, ok := sf.Interface().([]string); ok {
+			if fmt.Sprintf("%v", structutils.ParseSliceString(defaultTag)) == fmt.Sprintf("%v", sl) {
+				return true
+			}
+		}
+		// Field is a slice of ints.
+		if sl, ok := sf.Interface().([]int); ok {
+			if fmt.Sprintf("%v", structutils.ParseSliceInt(defaultTag)) == fmt.Sprintf("%v", sl) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // tomlTypeName returns the TOML type name of the Go value's type. It is
