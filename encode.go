@@ -354,14 +354,14 @@ func (enc *Encoder) eStruct(key Key, rv reflect.Value) {
 				continue
 			}
 
+			if isOmmitedField(sf, sft) {
+				continue
+			}
+
 			if sft.Type.Kind() == reflect.Struct {
 				// Output an extra new line between top-level tables.
 				// (The newline isn't written if nothing else has been written though.)
 				enc.newline()
-			}
-
-			if isOmmitedField(sf, sft) {
-				continue
 			}
 
 			comment := sft.Tag.Get("comment")
