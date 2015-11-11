@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/geekbros/SHM-Backend/tools/structutils"
 )
 
 type tomlEncodeError struct{ error }
@@ -335,6 +337,26 @@ func (enc *Encoder) eStruct(key Key, rv reflect.Value) {
 				// Output an extra new line between top-level tables.
 				// (The newline isn't written if nothing else has been written though.)
 				enc.newline()
+			}
+
+			defaultTag := sft.Tag.Get("default")
+			if defaultTag != "" {
+				// Field is an elementary type.
+				if fmt.Sprintf("%v", sf.Interface()) == defaultTag {
+					continue
+				}
+				// Field is a slice of strings.
+				if sl, ok := sf.Interface().([]string); ok {
+					if fmt.Sprintf("%v", structutils.ParseSliceString(defaultTag)) == fmt.Sprintf("%v", sl) {
+						continue
+					}
+				}
+				// Field is a slice of ints.
+				if sl, ok := sf.Interface().([]int); ok {
+					if fmt.Sprintf("%v", structutils.ParseSliceInt(defaultTag)) == fmt.Sprintf("%v", sl) {
+						continue
+					}
+				}
 			}
 
 			comment := sft.Tag.Get("comment")
