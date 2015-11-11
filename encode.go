@@ -243,7 +243,7 @@ func (enc *Encoder) eArrayOfTables(key Key, rv reflect.Value) {
 func (enc *Encoder) eTable(key Key, rv reflect.Value) {
 	panicIfInvalidKey(key)
 	// All values of struct have default values - skip the struct.
-	if isFullyDefaultStruct(key, rv) {
+	if isFullyDefaultStruct(rv) {
 		return
 	}
 	if len(key) > 0 {
@@ -255,7 +255,7 @@ func (enc *Encoder) eTable(key Key, rv reflect.Value) {
 
 // isFullyDefaultStruct says if all actual values of given struct are equal to those
 // which are assigned in their 'default' tag.
-func isFullyDefaultStruct(key Key, rv reflect.Value) bool {
+func isFullyDefaultStruct(rv reflect.Value) bool {
 	if rv.Kind() != reflect.Struct {
 		return false
 	}
@@ -402,6 +402,11 @@ func (enc *Encoder) eStruct(key Key, rv reflect.Value) {
 
 func isOmmitedField(sf reflect.Value, sft reflect.StructField) bool {
 	defaultTag := sft.Tag.Get("default")
+	if sf.Kind() == reflect.Struct {
+		if isFullyDefaultStruct(sf) {
+			return true
+		}
+	}
 	if defaultTag != "" {
 		// Field is an elementary type.
 		if fmt.Sprintf("%v", sf.Interface()) == defaultTag {

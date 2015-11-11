@@ -13,8 +13,8 @@ type Person struct {
 
 func TestDefaults(t *testing.T) {
 	data := struct {
-		Person Person
-	}{Person: Person{"Dmitry", "Yakutkin"}}
+		Person Person `comment:"Person's comment"`
+	}{Person: Person{"Dmittry", "Yakutkin"}}
 
 	var Buffer bytes.Buffer
 	e := NewEncoder(&Buffer)
