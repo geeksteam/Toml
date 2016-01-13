@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/geekbros/Tools/structutils"
+	"github.com/geeksteam/GoTools/structutils"
 )
 
 type tomlEncodeError struct{ error }
